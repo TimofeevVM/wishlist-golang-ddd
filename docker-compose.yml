@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  db:
+    container_name: ${APP_SERVICE_NAME}-db
+    image: postgres:16.2-alpine3.18
+    environment:
+      POSTGRES_PASSWORD: postgres
+      TZ: 'Europe/Moscow'
+      PGTZ: 'Europe/Moscow'
+    ports:
+      - "${INFRA_DB_PORT:-5432}:5432"
+    volumes:
+      - "postgre-data-wg:/var/lib/postgresql/data"
+
+volumes:
+  postgre-data-wg:
