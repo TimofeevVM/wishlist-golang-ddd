@@ -1,4 +1,4 @@
-package wishlist
+package domain
 
 type Item struct {
 	Id   ItemId

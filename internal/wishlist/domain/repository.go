@@ -1,4 +1,4 @@
-package wishlist
+package domain
 
 type Repository interface {
 	Persist(wishlist *Wishlist) error

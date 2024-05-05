@@ -1,16 +1,16 @@
-package wishlist
+package repository
 
 import (
 	"database/sql"
 	"encoding/json"
-	wishlist "wishlist/internal/wishlist/domain"
+	"wishlist/internal/wishlist/domain"
 )
 
 type PqRepository struct {
 	db *sql.DB
 }
 
-func (r *PqRepository) GetById(id *wishlist.WishlistId) (*wishlist.Wishlist, error) {
+func (r *PqRepository) GetById(id *domain.WishlistId) (*domain.Wishlist, error) {
 	row := r.db.QueryRow(`select id, data from wishlist where id = $1`, id.String())
 
 	var idRaw string
@@ -31,18 +31,18 @@ func (r *PqRepository) GetById(id *wishlist.WishlistId) (*wishlist.Wishlist, err
 		return nil, err
 	}
 
-	items := make(wishlist.Items, 0)
+	items := make(domain.Items, 0)
 
 	for _, item := range wishlistData.Items {
-		items = append(items, &wishlist.Item{
-			Id:   wishlist.ItemId(item.Id),
+		items = append(items, &domain.Item{
+			Id:   domain.ItemId(item.Id),
 			Text: item.Text,
 			Done: item.Done,
 		})
 	}
 
-	return &wishlist.Wishlist{
-		Id:    wishlist.WishlistId(idRaw),
+	return &domain.Wishlist{
+		Id:    domain.WishlistId(idRaw),
 		Title: wishlistData.Title,
 		Items: items,
 	}, nil
@@ -67,7 +67,7 @@ type WishlistItemData struct {
 	Done bool   `json:"done"`
 }
 
-func (r *PqRepository) Persist(wishlist *wishlist.Wishlist) error {
+func (r *PqRepository) Persist(wishlist *domain.Wishlist) error {
 	items := make([]WishlistItemData, 0)
 
 	for _, item := range wishlist.Items {
