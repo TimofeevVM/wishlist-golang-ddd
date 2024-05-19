@@ -3,6 +3,7 @@ package wishlist
 import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	wishlist "wishlist/internal/wishlist/app/command"
 	wishlist_query "wishlist/internal/wishlist/app/query"
 	"wishlist/internal/wishlist/domain"
@@ -33,8 +34,9 @@ type Container interface {
 }
 
 type ImplContainer struct {
-	db  *sql.DB
-	gin *gin.Engine
+	db      *sql.DB
+	pgxpool *pgxpool.Pool
+	gin     *gin.Engine
 
 	createItemAction     *actions.AddItemAction
 	getWishlistAction    *actions.GetWishlistAction
@@ -48,10 +50,11 @@ type ImplContainer struct {
 	wishlistRepository domain.Repository
 }
 
-func NewContainer(db *sql.DB, gin *gin.Engine) Container {
+func NewContainer(db *sql.DB, gin *gin.Engine, pgxpool *pgxpool.Pool) Container {
 	container := &ImplContainer{
-		db:  db,
-		gin: gin,
+		db:      db,
+		gin:     gin,
+		pgxpool: pgxpool,
 	}
 
 	return container
@@ -67,7 +70,7 @@ func (c *ImplContainer) Db() *sql.DB {
 
 func (c *ImplContainer) DomainWishlistRepository() domain.Repository {
 	if c.wishlistRepository == nil {
-		c.wishlistRepository = repository.NewPqRepository(c.db)
+		c.wishlistRepository = repository.NewPqRepository(c.db, c.pgxpool)
 	}
 
 	return c.wishlistRepository

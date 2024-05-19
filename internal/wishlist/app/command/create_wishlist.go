@@ -1,9 +1,13 @@
 package wishlist
 
-import wishlist "wishlist/internal/wishlist/domain"
+import (
+	"context"
+	wishlist "wishlist/internal/wishlist/domain"
+)
 
 type CreateWishlistCommand struct {
-	Title string
+	Title   string
+	Context context.Context
 }
 
 type CreateWishlistHandler struct {
@@ -18,7 +22,7 @@ func NewCreateWishlistHandler(repository wishlist.Repository) *CreateWishlistHan
 
 func (h *CreateWishlistHandler) Handle(command CreateWishlistCommand) (*wishlist.Wishlist, error) {
 	newWishlist := wishlist.NewWishlist(command.Title)
-	err := h.WishlistRepository.Persist(newWishlist)
+	err := h.WishlistRepository.Persist(command.Context, newWishlist)
 
 	if err != nil {
 		return nil, err

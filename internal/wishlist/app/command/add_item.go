@@ -1,10 +1,14 @@
 package wishlist
 
-import wishlist "wishlist/internal/wishlist/domain"
+import (
+	"context"
+	wishlist "wishlist/internal/wishlist/domain"
+)
 
 type AddItemCommand struct {
 	IdWishlist string
 	Text       string
+	Context    context.Context
 }
 
 type AddItemHandler struct {
@@ -19,7 +23,7 @@ func NewAddItemHandler(repository wishlist.Repository) *AddItemHandler {
 
 func (h *AddItemHandler) Handle(command AddItemCommand) (*wishlist.Item, error) {
 	id := wishlist.WishlistId(command.IdWishlist)
-	foundWishlist, err := h.WishlistRepository.GetById(&id)
+	foundWishlist, err := h.WishlistRepository.GetById(command.Context, &id)
 
 	if err != nil {
 		return nil, err
@@ -27,7 +31,7 @@ func (h *AddItemHandler) Handle(command AddItemCommand) (*wishlist.Item, error) 
 
 	item := foundWishlist.AddItem(command.Text)
 
-	err = h.WishlistRepository.Persist(foundWishlist)
+	err = h.WishlistRepository.Persist(command.Context, foundWishlist)
 
 	if err != nil {
 		return nil, err

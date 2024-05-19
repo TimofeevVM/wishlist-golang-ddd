@@ -43,6 +43,7 @@ func (c *AddItemAction) Handle(gin *gin.Context) {
 		wishlist.AddItemCommand{
 			IdWishlist: gin.Param("id"),
 			Text:       request.Text,
+			Context:    gin,
 		})
 
 	if err != nil {

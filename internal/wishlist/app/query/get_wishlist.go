@@ -1,9 +1,13 @@
 package wishlist_query
 
-import wishlist "wishlist/internal/wishlist/domain"
+import (
+	"context"
+	wishlist "wishlist/internal/wishlist/domain"
+)
 
 type GetWishlistQuery struct {
-	Id string
+	Id      string
+	Context context.Context
 }
 
 type GetWishlistHandler struct {
@@ -18,7 +22,7 @@ func NewGetWishlistHandler(repository wishlist.Repository) *GetWishlistHandler {
 
 func (h *GetWishlistHandler) Handle(command GetWishlistQuery) (*wishlist.Wishlist, error) {
 	id := wishlist.WishlistId(command.Id)
-	foundWishlist, err := h.WishlistRepository.GetById(&id)
+	foundWishlist, err := h.WishlistRepository.GetById(command.Context, &id)
 
 	if err != nil {
 		return nil, err

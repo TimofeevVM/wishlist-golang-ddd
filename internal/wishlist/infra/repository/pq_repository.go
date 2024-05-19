@@ -1,16 +1,19 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"wishlist/internal/wishlist/domain"
 )
 
 type PqRepository struct {
-	db *sql.DB
+	db      *sql.DB
+	pgxpool *pgxpool.Pool
 }
 
-func (r *PqRepository) GetById(id *domain.WishlistId) (*domain.Wishlist, error) {
+func (r *PqRepository) GetById(context context.Context, id *domain.WishlistId) (*domain.Wishlist, error) {
 	row := r.db.QueryRow(`select id, data from wishlist where id = $1`, id.String())
 
 	var idRaw string
@@ -49,9 +52,10 @@ func (r *PqRepository) GetById(id *domain.WishlistId) (*domain.Wishlist, error) 
 
 }
 
-func NewPqRepository(db *sql.DB) *PqRepository {
+func NewPqRepository(db *sql.DB, pgxpool *pgxpool.Pool) *PqRepository {
 	return &PqRepository{
-		db: db,
+		db:      db,
+		pgxpool: pgxpool,
 	}
 }
 
@@ -67,7 +71,7 @@ type WishlistItemData struct {
 	Done bool   `json:"done"`
 }
 
-func (r *PqRepository) Persist(wishlist *domain.Wishlist) error {
+func (r *PqRepository) Persist(context context.Context, wishlist *domain.Wishlist) error {
 	items := make([]WishlistItemData, 0)
 
 	for _, item := range wishlist.Items {
@@ -91,7 +95,8 @@ func (r *PqRepository) Persist(wishlist *domain.Wishlist) error {
 		return err
 	}
 
-	_, err = r.db.Exec(
+	_, err = r.pgxpool.Exec(
+		context,
 		`INSERT INTO wishlist (id, data) 
 VALUES ($1, $2)
 ON CONFLICT(id) DO UPDATE SET data = EXCLUDED.data`,

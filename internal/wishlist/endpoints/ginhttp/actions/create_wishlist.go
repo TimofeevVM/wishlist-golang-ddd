@@ -26,11 +26,11 @@ func NewCreateWishlistAction(addItemHandler *wishlist.CreateWishlistHandler) *Cr
 	}
 }
 
-func (c *CreateWishlistAction) Handle(gin *gin.Context) {
+func (c *CreateWishlistAction) Handle(ginContext *gin.Context) {
 	request := CreateWishlistRequest{}
-	err := gin.ShouldBindJSON(&request)
+	err := ginContext.ShouldBindJSON(&request)
 	if err != nil {
-		gin.JSON(http.StatusBadRequest, &response.Error{
+		ginContext.JSON(http.StatusBadRequest, &response.Error{
 			Message: "Неккоректный json",
 		})
 
@@ -39,18 +39,19 @@ func (c *CreateWishlistAction) Handle(gin *gin.Context) {
 
 	wl, err := c.addItemHandler.Handle(
 		wishlist.CreateWishlistCommand{
-			Title: request.Title,
+			Title:   request.Title,
+			Context: ginContext,
 		})
 
 	if err != nil {
-		gin.JSON(http.StatusBadRequest, &response.Error{
+		ginContext.JSON(http.StatusBadRequest, &response.Error{
 			Message: err.Error(),
 		})
 
 		return
 	}
 
-	gin.JSON(http.StatusOK, &CreateWishlistResponse{
+	ginContext.JSON(http.StatusOK, &CreateWishlistResponse{
 		Id:    wl.Id.String(),
 		Title: wl.Title,
 	})

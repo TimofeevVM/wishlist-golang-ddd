@@ -33,7 +33,8 @@ func NewGetWishlistAction(getWishlistAction *wishlist_query.GetWishlistHandler) 
 func (c *GetWishlistAction) Handle(gin *gin.Context) {
 	wl, err := c.getWishlistHandler.Handle(
 		wishlist_query.GetWishlistQuery{
-			Id: gin.Param("id"),
+			Id:      gin.Param("id"),
+			Context: gin,
 		})
 
 	if err != nil {
