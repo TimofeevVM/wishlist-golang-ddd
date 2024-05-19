@@ -2,19 +2,17 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"wishlist/internal/wishlist/domain"
 )
 
 type PqRepository struct {
-	db      *sql.DB
 	pgxpool *pgxpool.Pool
 }
 
 func (r *PqRepository) GetById(context context.Context, id *domain.WishlistId) (*domain.Wishlist, error) {
-	row := r.db.QueryRow(`select id, data from wishlist where id = $1`, id.String())
+	row := r.pgxpool.QueryRow(context, `select id, data from wishlist where id = $1`, id.String())
 
 	var idRaw string
 	var data string
@@ -52,9 +50,8 @@ func (r *PqRepository) GetById(context context.Context, id *domain.WishlistId) (
 
 }
 
-func NewPqRepository(db *sql.DB, pgxpool *pgxpool.Pool) *PqRepository {
+func NewPqRepository(pgxpool *pgxpool.Pool) *PqRepository {
 	return &PqRepository{
-		db:      db,
 		pgxpool: pgxpool,
 	}
 }

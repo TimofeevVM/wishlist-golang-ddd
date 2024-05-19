@@ -1,7 +1,6 @@
 package wishlist
 
 import (
-	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	wishlist "wishlist/internal/wishlist/app/command"
@@ -13,7 +12,7 @@ import (
 
 type Container interface {
 	GinEngine() *gin.Engine
-	Db() *sql.DB
+	GetPgPool() *pgxpool.Pool
 
 	/* ginhttp */
 
@@ -34,7 +33,6 @@ type Container interface {
 }
 
 type ImplContainer struct {
-	db      *sql.DB
 	pgxpool *pgxpool.Pool
 	gin     *gin.Engine
 
@@ -50,9 +48,8 @@ type ImplContainer struct {
 	wishlistRepository domain.Repository
 }
 
-func NewContainer(db *sql.DB, gin *gin.Engine, pgxpool *pgxpool.Pool) Container {
+func NewContainer(gin *gin.Engine, pgxpool *pgxpool.Pool) Container {
 	container := &ImplContainer{
-		db:      db,
 		gin:     gin,
 		pgxpool: pgxpool,
 	}
@@ -64,13 +61,13 @@ func (c *ImplContainer) GinEngine() *gin.Engine {
 	return c.gin
 }
 
-func (c *ImplContainer) Db() *sql.DB {
-	return c.db
+func (c *ImplContainer) GetPgPool() *pgxpool.Pool {
+	return c.pgxpool
 }
 
 func (c *ImplContainer) DomainWishlistRepository() domain.Repository {
 	if c.wishlistRepository == nil {
-		c.wishlistRepository = repository.NewPqRepository(c.db, c.pgxpool)
+		c.wishlistRepository = repository.NewPqRepository(c.GetPgPool())
 	}
 
 	return c.wishlistRepository

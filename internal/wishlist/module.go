@@ -13,11 +13,10 @@ type WishlistModule struct {
 	container *Container
 }
 
-func InitWishlistModule(pgxPool *pgxpool.Pool, db *sql.DB, gin *gin.Engine) WishlistModule {
-	container := NewContainer(db, gin, pgxPool)
+func InitWishlistModule(pgxPool *pgxpool.Pool, gin *gin.Engine) WishlistModule {
+	container := NewContainer(gin, pgxPool)
 
 	module := WishlistModule{
-		db:        db,
 		pgxPool:   pgxPool,
 		gin:       gin,
 		container: &container,

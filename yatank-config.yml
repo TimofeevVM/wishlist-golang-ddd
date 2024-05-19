@@ -1,0 +1,11 @@
+phantom:
+  address: host.docker.internal:7001
+  load_profile:
+    load_type: rps
+    schedule: line(5000, 10000, 10s)
+  uris:
+    - "/wishlist/8dc01b30-7b63-4eb2-8db4-1f4aefeda1d5"
+console:
+  enabled: true
+telegraf:
+  enabled: false

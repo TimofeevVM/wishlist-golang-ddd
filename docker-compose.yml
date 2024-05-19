@@ -13,5 +13,32 @@ services:
     volumes:
       - "postgre-data-wg:/var/lib/postgresql/data"
 
+  stathouse:
+    image: vkcom/statshouse-localrun-all:latest
+    container_name: sh
+    user: "root:root"
+    ports:
+      - "2442:2442"
+      - "8123:8123"
+      - "9000:9000"
+      - "10888:10888"
+      - "13336:13336"
+      - "13337:13337/udp"
+      - "13337:13337/tcp"
+    volumes:
+      - metadata:/var/lib/statshouse/metadata
+      - kh:/var/lib/clickhouse
+
+  yatank:
+    image: yandex/yandex-tank
+    container_name: tank
+    entrypoint: /bin/bash
+    volumes:
+      - yatank:/var/loadtest
+      - ./yatank-config.yml:/yatank-config.yml
+
 volumes:
   postgre-data-wg:
+  kh:
+  metadata:
+  yatank:

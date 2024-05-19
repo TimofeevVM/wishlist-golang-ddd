@@ -155,6 +155,10 @@ github.com/twitchyliquid64/golang-asm/unsafeheader
 # github.com/ugorji/go/codec v1.2.12
 ## explicit; go 1.11
 github.com/ugorji/go/codec
+# github.com/vkcom/statshouse-go v0.3.0
+## explicit; go 1.19
+github.com/vkcom/statshouse-go
+github.com/vkcom/statshouse-go/internal/basictl
 # golang.org/x/arch v0.7.0
 ## explicit; go 1.18
 golang.org/x/arch/x86/x86asm

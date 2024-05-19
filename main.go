@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
+	statshouse "github.com/vkcom/statshouse-go"
 	"log"
 	"net/http"
 	"os"
@@ -28,13 +29,41 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
-	defer db.Close()
+	stathouseClient := statshouse.NewClient(
+		log.Printf,
+		"udp",
+		"localhost:13337",
+		"",
+	)
 
-	dbpool, err := pgxpool.New(ctx, "postgres://postgres:postgres@localhost:5433/postgres")
+	defer stathouseClient.Close()
+
+	stathouseClient.Metric("started", statshouse.Tags{1: "main"}).Count(1)
+
+	config, err := pgxpool.ParseConfig("postgres://postgres:postgres@localhost:5433/postgres")
+
+	var dbpool *pgxpool.Pool
+
+	config.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		stathouseClient.MetricNamed(
+			"pgxpoolCounter",
+			statshouse.NamedTags{{"trigger", "AfterConnect"}},
+		).Count(float64(dbpool.Stat().TotalConns()))
+
+		return nil
+	}
+
+	config.BeforeClose = func(*pgx.Conn) {
+		stathouseClient.MetricNamed(
+			"pgxpoolCounter",
+			statshouse.NamedTags{{"trigger", "AfterConnect"}},
+		).Count(float64(dbpool.Stat().TotalConns()))
+	}
+
+	dbpool, err = pgxpool.NewWithConfig(ctx, config)
+
+	fmt.Printf("\n\nMax size of pool %d\n\n", dbpool.Stat().MaxConns())
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 		os.Exit(1)
@@ -46,8 +75,20 @@ func main() {
 	}
 
 	r := gin.Default()
+	r.Use(func(c *gin.Context) {
+		t := time.Now()
 
-	wishlist3.InitWishlistModule(dbpool, db, r)
+		c.Next()
+
+		latency := time.Since(t)
+
+		stathouseClient.MetricNamed(
+			"apilatencyValue",
+			statshouse.NamedTags{{"route", c.FullPath()}, {"path", c.Request.URL.Path}},
+		).Value(float64(latency.Microseconds()))
+	})
+
+	wishlist3.InitWishlistModule(dbpool, r)
 
 	srv := &http.Server{
 		Addr:    ":7001",
