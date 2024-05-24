@@ -14,25 +14,20 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"wishlist/configs"
 	wishlist3 "wishlist/internal/wishlist"
-)
-
-const (
-	host     = "localhost"
-	port     = 5433
-	user     = "postgres"
-	password = "postgres"
-	dbname   = "postgres"
 )
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	appConfig := configs.LoadConfig()
+
 	stathouseClient := statshouse.NewClient(
 		log.Printf,
 		"udp",
-		"localhost:13337",
+		appConfig.StathouseHost(),
 		"",
 	)
 
@@ -40,7 +35,7 @@ func main() {
 
 	stathouseClient.Metric("started", statshouse.Tags{1: "main"}).Count(1)
 
-	config, err := pgxpool.ParseConfig("postgres://postgres:postgres@localhost:5433/postgres")
+	config, err := pgxpool.ParseConfig(appConfig.DatabaseDsn())
 
 	var dbpool *pgxpool.Pool
 
@@ -91,7 +86,7 @@ func main() {
 	wishlist3.InitWishlistModule(dbpool, r)
 
 	srv := &http.Server{
-		Addr:    ":7001",
+		Addr:    appConfig.Addr(),
 		Handler: r,
 	}
 
